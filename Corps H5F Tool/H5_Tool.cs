@@ -17,28 +17,37 @@ namespace Corps_H5F_Tool
 {
     public partial class H5_Tool : Form
     {
+        public float defaultFoV = 0f;
+
         public H5_Tool()
-        {
+        {            
+
             InitializeComponent();
 
             FovTrackBar.Minimum = 65;
             FovTrackBar.Maximum = 150;
             ResTrackBar.Minimum = 840;
             ResTrackBar.Maximum = 7680;
+            RESHeightTrackBar.Minimum = 480;
+            RESHeightTrackBar.Maximum = 4320;
             FPSTrackBar.Minimum = 30;
             FPSTrackBar.Maximum = 300;
-            Process[] pname = Process.GetProcessesByName("notepad");
-            if (pname.Length == 0)
+
+            if (isGameRunning())
+            {                
+                FovInput.Value = Convert.ToDecimal(fetch_fov());
+                FPSInput.Value = fetch_fps();
+                H5Launcher.Visible = false;
+            }
+            else
             {
                 FovInput.Value = 78;
                 FPSInput.Value = 60;
+                H5Launcher.Visible = true;
             }
 
-            else
-            {
-                FovInput.Value = Convert.ToDecimal(fetch_fov());
-                FPSInput.Value = fetch_fps();
-            }
+            defaultFoV = (float)FovInput.Value;
+
             FovTrackBar.Value = Convert.ToInt32(FovInput.Value);    
             ResInput.Value = 1920;
             ResTrackBar.Value = 1920;
@@ -46,54 +55,88 @@ namespace Corps_H5F_Tool
 
             IDictionary maps = new Dictionary<string, string> {
                 {"Alpine", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
-                {"Breakout Arena", @"levels\multi\fo03_space\fo03_space"},
-                {"Coliseum", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
-                {"Eden", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
-                {"Empire", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
-                {"Fathom", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
+                {"Breakout Arena", @"levels\multi\fo_arena_breakout\fo_arena_breakout"},
+                {"Coliseum", @"levels\multi\ng50_ss_coliseum\ng50_ss_coliseum"},
+                //{"Eden", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
+                //{"Empire", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
+                //{"Fathom", @"levels\multi\ng23_ss_skew\ng23_ss_skew"},
                 {"Glacier", @"levels\multi\fo02_glacier\fo02_glacier"},
-                {"Mercy", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
-                {"Molten", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
-                {"Overgrowth", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
-                {"Plaza", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
-                {"Regret", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
-                {"Riptide", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
-                {"Stasis", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
-                {"The Rig", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
+                //{"Mercy", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
+                //{"Molten", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
+                //{"Overgrowth", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
+                //{"Plaza", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
+                {"Regret", @"levels\multi\ng43r_midship_remix\ng43r_midship_remix"},
+                //{"Riptide", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
+                {"Stasis", @"levels\multi\ng25_ss_pistons_remix\ng25_ss_pistons_remix"},
+                //{"The Rig", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
                 {"Tidal", @"levels\multi\fo04_ocean\fo04_ocean"},
-                {"Torque", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
+                {"Torque", @"levels\multi\ng25_ss_pistons\ng25_ss_pistons"},
                 {"Truth", @"levels\multi\ng43_midship\ng43_midship"},
-                {"Tyrant", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"}
+                //{"Tyrant", @"levels\multi\fo01_terrain_alpine\fo01_terrain_alpine"},
+                {"Parallax", @"levels\multi\fo03_space\fo03_space"},
+                // ng11_la_courtyard
+                // ng20_sa_towers\ng20_sa_towers crash
+                // ng23_ss_skew = fathom
+                //ng50r_ss_coliseum_remix
+                //levels\multi\ng50r_ss_coliseum_remix\ng50r_ss_coliseum_remix
             };
 
             TutorialMapChangerMaps.DataSource = new BindingSource(maps, null);
             TutorialMapChangerMaps.DisplayMember = "Key";
             TutorialMapChangerMaps.ValueMember = "Value";
         }
-
-        const string ApplicationUserModelID = @"Microsoft.Halo5Forge_8wekyb3d8bbwe!Ausar"; 
-        const string PackageID = @"Microsoft.Halo5Forge_1.114.4592.2_x64__8wekyb3d8bbwe";
         
         private void FovChange_Click(object sender, EventArgs e)
         {
-            Int32 addr = 0x58ECF90;
-
             float fovval = (float)FovInput.Value;
+            setFoV(fovval);
+        }
 
-            byte[] fov = BitConverter.GetBytes(fovval);
-
+        private void setFoV(float val) {
+            Int32 addr = 0x58ECF90;
+            byte[] fov = BitConverter.GetBytes(val);
             MemoryManager.WriteToAddress(addr, fov);
         }
 
+
         private void ResChange_Click(object sender, EventArgs e)
         {
-            //Int32 addr = 0x58ECF90;
+            Change_Res();
+            Change_Res_Height();
+            Chang_Aspect();
+        }
 
-            //int test = (int)ResInput.Value;
+        private void Change_Res()
+        {
+            Int32 addr = 0x4E97F60;
 
-            //byte[] res = BitConverter.GetBytes(test);
+            int test = (int)ResInput.Value;
 
-            //MemoryManager.WriteToAddress(addr, res);
+            byte[] res = BitConverter.GetBytes(test);
+
+            MemoryManager.WriteToAddress(addr, res);
+        }
+
+        private void Change_Res_Height()
+        {
+            Int32 addr = 0x4E97F64;
+
+            int test = (int)ResHeightInput.Value;
+
+            byte[] res = BitConverter.GetBytes(test);
+
+            MemoryManager.WriteToAddress(addr, res);
+        }
+
+        private void Chang_Aspect()
+        {
+            Int32 addr = 0x332FC18;
+
+            float test = (int)ResInput.Value / 1080;
+
+            byte[] aspect = BitConverter.GetBytes(test);
+
+            MemoryManager.WriteToAddress(addr, aspect);
         }
 
         private void TutorialMapChangerChange_Click(object sender, EventArgs e)
@@ -103,8 +146,12 @@ namespace Corps_H5F_Tool
             string mapval = TutorialMapChangerMaps.SelectedValue.ToString();
 
             byte[] map = Encoding.ASCII.GetBytes(mapval);
+            byte[] terminatedMap = new byte[map.Length + 1];
 
-            MemoryManager.WriteToAddress(addr, map);
+            map.CopyTo(terminatedMap, 0);
+            terminatedMap[terminatedMap.Length - 1] = 0x00;
+
+            MemoryManager.WriteToAddress(addr, terminatedMap);
         }
 
         private void FovTrackBarScroll(object sender, EventArgs e)
@@ -115,6 +162,12 @@ namespace Corps_H5F_Tool
         private void ResTrackBarScroll(object sender, EventArgs e)
         {
             ResInput.Value = ResTrackBar.Value;
+        }
+
+
+        private void ResHeightTrackBarScroll(object sender, EventArgs e)
+        {
+            ResHeightInput.Value = RESHeightTrackBar.Value;
         }
 
         private void change_fps(int fps, Int32 addr)
@@ -146,14 +199,38 @@ namespace Corps_H5F_Tool
 
         private void H5Launcher_Click(object sender, EventArgs e)
         {
-            ProcessStartInfo halo5info = new ProcessStartInfo();
-            halo5info.FileName = "halo5forge.exe";
-            Process.Start(halo5info);
+            UWP.LaunchApp("Microsoft.Halo5Forge_1.114.4592.2_x64__8wekyb3d8bbwe");
         }
 
         private void FPSTrackBarScroll(object sender, EventArgs e)
         {
             FPSInput.Value = FPSTrackBar.Value;
+            Change_Res();
+            Chang_Aspect();
+        }
+
+        private void ResetFOV_Click(object sender, EventArgs e)
+        {
+            setFoV(defaultFoV);
+            FovInput.Value = (int)defaultFoV;
+            FovTrackBar.Value = (int)defaultFoV;
+        }
+
+        private void tmrGameCheck_Tick(object sender, EventArgs e)
+        {
+            if (isGameRunning())
+            {
+                H5Launcher.Visible = false;
+            } else
+            {
+                H5Launcher.Visible = true;
+            }
+        }
+        
+        private bool isGameRunning()
+        {
+            Process[] pname = Process.GetProcessesByName("halo5forge");
+            return (pname.Length != 0);
         }
     }
 }
